@@ -1,4 +1,4 @@
-set(APP_NAME game)
+set(APP_NAME minesweeper3d)
 
 # Whenever this glob's value changes, cmake will rerun and update the build with
 # the new/removed files.

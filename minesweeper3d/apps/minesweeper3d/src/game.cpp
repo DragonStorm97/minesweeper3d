@@ -27,27 +27,23 @@ void UpdateDrawFrame()
 
 int main()
 {
-  const auto val = libfunc() + appfunc();
-  std::cout << "Hello, World! " << val << std::endl;
 
-
-  InitWindow(640, 480, "Hello, Raylib");
+  InitWindow(640, 480, "Minesweeper 3D!");
 
 #if defined(PLATFORM_WEB)
   emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
 #else
   SetTargetFPS(60);
 
-  int should_quit = 0;
+  bool should_quit = false;
   while (!should_quit) {
     if (WindowShouldClose() || IsKeyPressed(KEY_ESCAPE)) {
-        should_quit = 1;
+        should_quit = true;
     }
     UpdateDrawFrame();
   }
 #endif
 
   CloseWindow();
-  return val;
 }
 
