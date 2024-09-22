@@ -112,9 +112,20 @@ if(minesweeper3d_ENABLE_RAYLIB)
       set(FETCHCONTENT_QUIET NO)
       FetchContent_Populate(raylib)
       set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
+      set(BUILD_GAMES    OFF CACHE BOOL "" FORCE) # or games
       add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
     endif()
   endif()
+# Fetch raygui
+  FetchContent_Declare(
+    raygui
+    GIT_REPOSITORY https://github.com/raysan5/raygui.git
+    GIT_TAG 4.0
+  )
+  FetchContent_MakeAvailable(raygui)
+  
+# Include the raygui header path
+  include_directories(${raygui_SOURCE_DIR}/src)
 
   # add_custom_command(
   #   TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
