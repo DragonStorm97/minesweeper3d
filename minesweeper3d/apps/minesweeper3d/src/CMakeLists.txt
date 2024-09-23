@@ -20,7 +20,7 @@ target_link_libraries(${APP_NAME} PRIVATE libminesweeper3d)
 
 if(minesweeper3d_ENABLE_RAYLIB)
   #set(raylib_VERBOSE 1)
-  target_link_libraries(${APP_NAME} PRIVATE raylib)
+  target_link_libraries(${APP_NAME} PRIVATE raylib raylib_cpp)
 
   # Web Configurations
   if(${PLATFORM} STREQUAL "Web")

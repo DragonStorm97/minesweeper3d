@@ -116,6 +116,21 @@ if(minesweeper3d_ENABLE_RAYLIB)
       add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
     endif()
   endif()
+  
+# raylib-cpp
+  find_package(raylib_cpp QUIET)
+  if(NOT raylib_cpp_FOUND)
+    if(NOT DEFINED RAYLIB_CPP_VERSION)
+      set(RAYLIB_CPP_VERSION v5.0.2)
+    endif()
+    include(FetchContent)
+    FetchContent_Declare(
+          raylib_cpp
+          GIT_REPOSITORY https://github.com/RobLoach/raylib-cpp.git
+          GIT_TAG ${RAYLIB_CPP_VERSION}
+    )
+    FetchContent_MakeAvailable(raylib_cpp)
+  endif()
 # Fetch raygui
   FetchContent_Declare(
     raygui
@@ -125,7 +140,7 @@ if(minesweeper3d_ENABLE_RAYLIB)
   FetchContent_MakeAvailable(raygui)
   
 # Include the raygui header path
-  include_directories(${raygui_SOURCE_DIR}/src)
+  include_directories(SYTSEM ${raygui_SOURCE_DIR}/src)
 
   # add_custom_command(
   #   TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
