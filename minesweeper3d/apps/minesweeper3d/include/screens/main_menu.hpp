@@ -1,14 +1,17 @@
+#pragma once
+
+#include "Vector2.hpp"
 #include <screen.hpp>
 
-class Main_Menu : public Screen {
+class MainMenu : public Screen {
 public:
-  Main_Menu() = default;
-  Main_Menu(const Main_Menu&) = default;
-  Main_Menu(Main_Menu&&) = delete;
-  Main_Menu& operator=(const Main_Menu&) = default;
-  Main_Menu& operator=(Main_Menu&&) = delete;
-  ~Main_Menu() override = default;
+  MainMenu() = default;
+  MainMenu(const MainMenu&) = default;
+  MainMenu(MainMenu&&) = delete;
+  MainMenu& operator=(const MainMenu&) = default;
+  MainMenu& operator=(MainMenu&&) = delete;
+  ~MainMenu() override = default;
 
-  void Draw() override;
+  void Draw(raylib::Vector2 windowSize) override;
 
 };
