@@ -10,7 +10,6 @@
 #include <random>
 #include <raygui.h>
 #include <raylib-cpp.hpp>
-#include <screens/main_menu.hpp>
 #include <screen_manager.hpp>
 #include <unordered_set>
 
@@ -36,8 +35,17 @@
       return raylib::Color::Blue();
 }
 
+int getTextSize(int blockSize) {
+  static int textSize = blockSize;
+  while(raylib::MeasureText("X", textSize) > (blockSize-5)) {
+    --textSize;
+  }
+  return textSize;
+}
+
 void GameScreen::DrawBlock(Coord pos, Block block, int blockSize) {
-  constexpr auto textSize = 25;
+  // TODO: select a text size that fits into blockSize
+  const auto textSize = getTextSize(blockSize);
 
   if (static_cast<bool>(block.state & Block::State::Revealed)) {
     pos.x += blockSize/10;
@@ -46,15 +54,17 @@ void GameScreen::DrawBlock(Coord pos, Block block, int blockSize) {
       raylib::Rectangle{static_cast<float>(pos.x), static_cast<float>(pos.y), blockSize * 0.95F, blockSize * 0.95F}.Draw(raylib::Color::SkyBlue());
     }
     if(static_cast<bool>(block.state & Block::State::Bomb)) {
-      raylib::DrawText("X", pos.x, pos.y, textSize, raylib::Color::Red());
+      raylib::DrawText("X", pos.x+(blockSize/2)-(raylib::MeasureText("X", textSize)/2), pos.y, textSize, raylib::Color::Red());
     } else if(block.value > 0) {
-      raylib::DrawText(TextFormat("%1.0d", block.value), pos.x, pos.y, textSize, GetTileColor(block.value));
+      const char* txt = TextFormat("%1.0d", block.value);
+      raylib::DrawText(txt, pos.x+(blockSize/2)-(raylib::MeasureText(txt, textSize)/2), pos.y, textSize, GetTileColor(block.value));
     }
     return;
   } else {
     raylib::Rectangle{static_cast<float>(pos.x), static_cast<float>(pos.y), blockSize * 0.95F, blockSize * 0.95F}.Draw(raylib::Color::Gray());
     if(static_cast<bool>(block.state & Block::State::Flagged)) {
-      raylib::DrawText("|>", pos.x, pos.y, textSize, raylib::Color::Magenta());
+      const char* txt = "|>";
+      raylib::DrawText(txt, pos.x+(blockSize/2)-(raylib::MeasureText(txt, textSize)/2), pos.y, textSize, raylib::Color::Magenta());
       return;
     }
   }

@@ -3,6 +3,7 @@
 #include "game.hpp"
 #include "libminesweeper3d.hpp"
 #include "screen_manager.hpp"
+#include "screens/new_game_menu.hpp"
 #include <string>
 #include <numbers>
 
@@ -15,7 +16,6 @@
 
 #include <raylib-cpp.hpp>
 
-#include <screens/main_menu.hpp>
 #if defined(PLATFORM_WEB)
 #include <emscripten.h>
 void RenderLoopCallback(void* arg);
@@ -28,7 +28,7 @@ Game::Game(int width, int height, std::string game_title, int fps)
   GuiSetStyle(DEFAULT, TEXT_COLOR_NORMAL, raylib::Color::White());
 
   main_window.SetTargetFPS(target_fps);
-  screenManager.GoTo<MainMenu>();
+  screenManager.GoTo<NewGameMenu>();
 }
 
 void Game::UpdateDrawFrame() {
