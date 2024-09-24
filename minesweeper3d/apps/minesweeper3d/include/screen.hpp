@@ -31,11 +31,11 @@ private:
 
 };
 
-inline void DrawOffsetGrid(raylib::Vector2 offset, float gridSize, raylib::Vector2 innerSize) {
+inline float DrawOffsetGrid(raylib::Vector2 offset, float gridSize, raylib::Vector2 innerSize) {
   
   const float square_size = std::min(std::min(innerSize.x, innerSize.y)/gridSize, 30.0F);
   const float halfGrid = square_size * gridSize * 0.5F;
-   offset = ((innerSize + offset) * 0.5F) - raylib::Vector2{halfGrid, halfGrid};
+  offset = ((innerSize + offset) * 0.5F) - raylib::Vector2{halfGrid, halfGrid};
 
   // Draw grid lines
   for (int i = 0; i < gridSize+1; i++) {
@@ -43,4 +43,5 @@ inline void DrawOffsetGrid(raylib::Vector2 offset, float gridSize, raylib::Vecto
     DrawLineV(Vector2{offset.x, square_size*i + offset.y}, Vector2{square_size * gridSize + offset.x, square_size*i + offset.y}, raylib::Color::Black());
   }
 
+  return square_size;
 }

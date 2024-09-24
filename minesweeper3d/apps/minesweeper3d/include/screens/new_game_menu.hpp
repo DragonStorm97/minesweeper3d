@@ -23,10 +23,13 @@ public:
   [[nodiscard]] float GetSnakeSpeed() const {
     return snakeSpeed;
   }
+  [[nodiscard]] bool GetSnakeMode() const {
+    return snakeMode;
+  }
 private:
   float gridSize = 3;
   float numBombs = 1;
   // the speed of the snake, in blocks/s
   float snakeSpeed = 1;
-
+  bool snakeMode = false;
 };
