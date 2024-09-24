@@ -59,12 +59,13 @@ private:
 
   void GenerateGame();
   static void DrawBlock(Coord pos, Block block, int blockSize);
-  void RevealFrom(Coord pos){};
+  void RevealFrom(Coord pos);
 
   int gridSize = 3;
   int numBombs = 1;
   int snakeSpeed = 1;
   bool snakeMode = false;
+  int numSafeBlocks = 9;
 
   // We use a (doubly-linked-) list to represent blocks of our snake so we can add/remove on the front/end
   std::list<Coord> snakeBlocks;

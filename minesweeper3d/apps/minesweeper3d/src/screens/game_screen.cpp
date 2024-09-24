@@ -1,6 +1,7 @@
 
 #include "screens/game_screen.hpp"
 #include "Color.hpp"
+#include "Mouse.hpp"
 #include "Rectangle.hpp"
 #include "raylib.h"
 #include "screens/new_game_menu.hpp"
@@ -38,7 +39,7 @@ void GameScreen::DrawBlock(Coord pos, Block block, int blockSize) {
       raylib::Rectangle{static_cast<float>(pos.x), static_cast<float>(pos.y), blockSize * 0.95F, blockSize * 0.95F}.Draw(raylib::Color::SkyBlue());
       return;
     case Block::State::Flagged:
-      raylib::DrawText(">", pos.x, pos.y, textSize, raylib::Color::Magenta());
+      raylib::DrawText("|>", pos.x, pos.y, textSize, raylib::Color::Magenta());
       return;
   }
 }
@@ -49,14 +50,10 @@ void GameScreen::Draw(raylib::Vector2 size)
   raylib::Vector2 offset {size*0.1F};
   const raylib::Vector2 innerSize {size*0.9F};
 
-  // TODO: add pause menu button/on escape
-  // TODO: add game logic...
-  // Snake can reverse direction
-  
-
   const auto blockSize = static_cast<int>(DrawOffsetGrid(offset, gridSize, innerSize));
 
-  const float halfGrid = blockSize * gridSize * 0.5F;
+  auto gridDim = blockSize * gridSize;
+  const float halfGrid = gridDim * 0.5F;
   offset = ((innerSize + offset) * 0.5F) - raylib::Vector2{halfGrid, halfGrid};
 
   auto gridSizeSqr = static_cast<std::size_t>(gridSize) * static_cast<std::size_t>(gridSize);
@@ -65,6 +62,56 @@ void GameScreen::Draw(raylib::Vector2 size)
     {
       auto coord = Coord::AsCoord(static_cast<int>(blockIdx), gridSize);
       GameScreen::DrawBlock({static_cast<int>(offset.x + (blockSize * coord.x)), static_cast<int>(offset.y + (blockSize * coord.y))},blockGrid[blockIdx], blockSize);
+    }
+  }
+
+  // TODO: add pause menu button/on escape
+  // TODO: add game logic...
+  // Snake can reverse direction
+  const Rectangle gridRect{ offset.x, offset.y, static_cast<float>(gridDim), static_cast<float>(gridDim)};
+
+  if(snakeMode) {
+
+  } else {
+    if(raylib::Mouse::IsButtonPressed(MOUSE_BUTTON_LEFT)) {
+      // std::cout<<"LMB pressed at:"<<raylib::Mouse::GetX()<<","<<raylib::Mouse::GetY()<<std::endl;
+
+      const auto pos = raylib::Mouse::GetPosition();
+      // check to see if we clicked in the grid
+      if(pos.x >= offset.x && pos.y >= offset.y && pos.x <(offset.x +(gridDim)) && pos.y < offset.y + (gridDim)) {
+        // std::cout<<"CLICKED INSIDE GRID!"<<Coord{static_cast<int>((pos.x - offset.x)/(blockSize)), static_cast<int>((pos.y - offset.y)/(blockSize))}.As1D(gridSize)<<std::endl;
+        RevealFrom({static_cast<int>((pos.x - offset.x)/(blockSize)),static_cast<int>((pos.y - offset.y)/(blockSize))});
+      }
+    }
+  }
+}
+
+void GameScreen::RevealFrom(Coord pos) {
+  const auto posIdx = pos.As1D(gridSize);
+  if(auto& hitBlock = blockGrid[posIdx]; hitBlock.state != Block::State::Revealed && hitBlock.state != Block::State::Flagged) {
+    hitBlock.state = Block::State::Revealed;
+    if(!hitBlock.isBomb) {
+      --numSafeBlocks;
+      if (numSafeBlocks == 0) {
+        // TODO:
+        // GetScreenManager()->GoTo<WinScreen>();
+      }
+      if(hitBlock.value == 0) {
+        for(int x = -1; x <= 1; ++x) {
+          for(int y = -1; y <= 1; ++y) {
+            const Coord coord{pos.x + x, pos.y + y};
+            const auto idx = coord.As1D(gridSize);
+            if(idx != posIdx && coord.x >= 0 && coord.y >= 0 && coord.x < gridSize && coord.y < gridSize) {
+              if(auto& cell = blockGrid[idx]; cell.state != Block::State::Revealed) {
+                RevealFrom(coord);
+              }
+            }
+          }
+        }
+      }
+    } else {
+      // TODO:
+      // GetScreenManager()->GoTo<LoseScreen>();
     }
   }
 }
@@ -76,6 +123,7 @@ void GameScreen::CameFrom(Screen* screen) {
       numBombs = static_cast<int>(ngm->GetNumBombs());
       snakeSpeed = static_cast<int>(ngm->GetSnakeSpeed());
       snakeMode = ngm->GetSnakeMode();
+      numSafeBlocks = (gridSize * gridSize)- numBombs;
       GenerateGame();
     }
   }
