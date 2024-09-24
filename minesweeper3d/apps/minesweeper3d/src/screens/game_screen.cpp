@@ -14,33 +14,49 @@
 #include <screen_manager.hpp>
 #include <unordered_set>
 
-[[nodiscardy]] raylib::Color GetTileColor(std::uint8_t value) {
-  return raylib::Color::Blue();
+[[nodiscard]] raylib::Color GetTileColor(std::uint8_t value) {
+  switch(value) {
+    case 1:
+      return raylib::Color::Blue();
+    case 2:
+      return raylib::Color::Green();
+    case 3:
+      return raylib::Color::Maroon();
+    case 4:
+      return raylib::Color::DarkPurple();
+    case 5:
+      return raylib::Color::Orange();
+    case 6:
+      return raylib::Color::SkyBlue();
+    case 7:
+      return raylib::Color::Pink();
+    case 8:
+      return raylib::Color::Yellow();
+  };
+      return raylib::Color::Blue();
 }
 
 void GameScreen::DrawBlock(Coord pos, Block block, int blockSize) {
   constexpr auto textSize = 25;
 
-  switch (block.state) {
-    case Block::State::Hidden:
-      raylib::Rectangle{static_cast<float>(pos.x), static_cast<float>(pos.y), blockSize * 0.95F, blockSize * 0.95F}.Draw(raylib::Color::Gray());
-      return;
-    case Block::State::Revealed:
-      pos.x += blockSize/10;
-      pos.y += blockSize/10;
-      if(block.isBomb) {
-        raylib::DrawText("X", pos.x, pos.y, textSize, raylib::Color::Red());
-      } else if(block.value > 0) {
-
-        raylib::DrawText(TextFormat("%1.0d", block.value), pos.x, pos.y, textSize, GetTileColor(block.value));
-      }
-      return;
-    case Block::State::Snake:
+  if (static_cast<bool>(block.state & Block::State::Revealed)) {
+    pos.x += blockSize/10;
+    pos.y += blockSize/10;
+    if(static_cast<bool>(block.state & Block::State::Snake)) {
       raylib::Rectangle{static_cast<float>(pos.x), static_cast<float>(pos.y), blockSize * 0.95F, blockSize * 0.95F}.Draw(raylib::Color::SkyBlue());
-      return;
-    case Block::State::Flagged:
+    }
+    if(static_cast<bool>(block.state & Block::State::Bomb)) {
+      raylib::DrawText("X", pos.x, pos.y, textSize, raylib::Color::Red());
+    } else if(block.value > 0) {
+      raylib::DrawText(TextFormat("%1.0d", block.value), pos.x, pos.y, textSize, GetTileColor(block.value));
+    }
+    return;
+  } else {
+    raylib::Rectangle{static_cast<float>(pos.x), static_cast<float>(pos.y), blockSize * 0.95F, blockSize * 0.95F}.Draw(raylib::Color::Gray());
+    if(static_cast<bool>(block.state & Block::State::Flagged)) {
       raylib::DrawText("|>", pos.x, pos.y, textSize, raylib::Color::Magenta());
       return;
+    }
   }
 }
 
@@ -73,14 +89,28 @@ void GameScreen::Draw(raylib::Vector2 size)
   if(snakeMode) {
 
   } else {
+    const auto pos = raylib::Mouse::GetPosition();
     if(raylib::Mouse::IsButtonPressed(MOUSE_BUTTON_LEFT)) {
       // std::cout<<"LMB pressed at:"<<raylib::Mouse::GetX()<<","<<raylib::Mouse::GetY()<<std::endl;
-
-      const auto pos = raylib::Mouse::GetPosition();
       // check to see if we clicked in the grid
       if(pos.x >= offset.x && pos.y >= offset.y && pos.x <(offset.x +(gridDim)) && pos.y < offset.y + (gridDim)) {
         // std::cout<<"CLICKED INSIDE GRID!"<<Coord{static_cast<int>((pos.x - offset.x)/(blockSize)), static_cast<int>((pos.y - offset.y)/(blockSize))}.As1D(gridSize)<<std::endl;
-        RevealFrom({static_cast<int>((pos.x - offset.x)/(blockSize)),static_cast<int>((pos.y - offset.y)/(blockSize))});
+        const Coord gridPos{static_cast<int>((pos.x - offset.x)/(blockSize)),static_cast<int>((pos.y - offset.y)/(blockSize))};
+        if(!isGenerated) {
+          GenerateGame(gridPos);
+        } 
+        RevealFrom(gridPos);
+      }
+    } if(raylib::Mouse::IsButtonPressed(MOUSE_BUTTON_RIGHT)) {
+      // check to see if we clicked in the grid
+      if(pos.x >= offset.x && pos.y >= offset.y && pos.x <(offset.x +(gridDim)) && pos.y < offset.y + (gridDim)) {
+        // std::cout<<"CLICKED INSIDE GRID!"<<Coord{static_cast<int>((pos.x - offset.x)/(blockSize)), static_cast<int>((pos.y - offset.y)/(blockSize))}.As1D(gridSize)<<std::endl;
+        const Coord gridPos{static_cast<int>((pos.x - offset.x)/(blockSize)),static_cast<int>((pos.y - offset.y)/(blockSize))};
+        if(!isGenerated) {
+          GenerateGame(gridPos);
+        } 
+        auto& block =blockGrid[gridPos.As1D(gridSize)];
+        block.state = static_cast<Block::State>(block.state ^ Block::State::Flagged);
       }
     }
   }
@@ -88,9 +118,9 @@ void GameScreen::Draw(raylib::Vector2 size)
 
 void GameScreen::RevealFrom(Coord pos) {
   const auto posIdx = pos.As1D(gridSize);
-  if(auto& hitBlock = blockGrid[posIdx]; hitBlock.state != Block::State::Revealed && hitBlock.state != Block::State::Flagged) {
-    hitBlock.state = Block::State::Revealed;
-    if(!hitBlock.isBomb) {
+  if(auto& hitBlock = blockGrid[posIdx]; !static_cast<bool>(hitBlock.state & Block::State::Revealed) && !static_cast<bool>(hitBlock.state & Block::State::Flagged)) {
+    hitBlock.state = static_cast<Block::State>(hitBlock.state | Block::State::Revealed);
+    if((hitBlock.state & Block::State::Bomb) != Block::State::Bomb) {
       --numSafeBlocks;
       if (numSafeBlocks == 0) {
         // TODO:
@@ -102,7 +132,7 @@ void GameScreen::RevealFrom(Coord pos) {
             const Coord coord{pos.x + x, pos.y + y};
             const auto idx = coord.As1D(gridSize);
             if(idx != posIdx && coord.x >= 0 && coord.y >= 0 && coord.x < gridSize && coord.y < gridSize) {
-              if(auto& cell = blockGrid[idx]; cell.state != Block::State::Revealed) {
+              if(auto& cell = blockGrid[idx]; !static_cast<bool>(cell.state & Block::State::Revealed)) {
                 RevealFrom(coord);
               }
             }
@@ -124,12 +154,14 @@ void GameScreen::CameFrom(Screen* screen) {
       snakeSpeed = static_cast<int>(ngm->GetSnakeSpeed());
       snakeMode = ngm->GetSnakeMode();
       numSafeBlocks = (gridSize * gridSize)- numBombs;
-      GenerateGame();
+      isGenerated = false;
+      const auto gridSizeSqr = static_cast<std::size_t>(gridSize * gridSize);
+      blockGrid = std::vector<Block>(gridSizeSqr, Block{});
     }
   }
 }
 
-std::unordered_set<Coord, CoordHash> generateUniqueCoordinates(int max, int count) {
+std::unordered_set<Coord, CoordHash> generateUniqueCoordinates(int max, int count, const std::unordered_set<Coord, CoordHash>& safeBlocks) {
   std::unordered_set<Coord, CoordHash> unique_coords;
   unique_coords.reserve(static_cast<std::size_t>(count));
 
@@ -139,33 +171,36 @@ std::unordered_set<Coord, CoordHash> generateUniqueCoordinates(int max, int coun
 
   while (unique_coords.size() < static_cast<std::size_t>(count)) {
     Coord coord = {dist(gen), dist(gen)};
-    unique_coords.insert(coord);
+    if(!safeBlocks.contains(coord)) {
+      unique_coords.insert(coord);
+    }
   }
 
   return unique_coords;
 }
 
-void GameScreen::GenerateGame() {
+void GameScreen::GenerateGame(Coord safeBlock) {
   snakeBlocks.clear();
 
   const auto gridSizeSqr = static_cast<std::size_t>(gridSize * gridSize);
-  blockGrid = std::vector<Block>(gridSizeSqr, Block{});
 
   // just used for while we are generating
   // Generate (unique) Bomb Locations
-  auto bombBlocks = generateUniqueCoordinates(gridSize-1, numBombs);
+  std::unordered_set<Coord, CoordHash> safeBlocks;
+  safeBlocks.insert(safeBlock);
+  auto bombBlocks = generateUniqueCoordinates(gridSize-1, numBombs, safeBlocks);
 
   // Place bombs on grid, and set "radar" values
   for(auto bomb : bombBlocks) {
     auto bombCoord = bomb.As1D(gridSize);
-    blockGrid[bombCoord].isBomb = true;
+    blockGrid[bombCoord].state = static_cast<Block::State>(blockGrid[bombCoord].state | Block::State::Bomb);
     // Increment grid for surrounding non-bomb cells
     for(int x = -1; x <= 1; ++x) {
       for(int y = -1; y <= 1; ++y) {
         const Coord coord{bomb.x + x, bomb.y + y};
         if(coord.x >= 0 && coord.y >= 0 && coord.x < gridSize && coord.y < gridSize) {
           const auto idx = coord.As1D(gridSize);
-          if(auto& cell = blockGrid[idx]; !cell.isBomb) {
+          if(auto& cell = blockGrid[idx]; !static_cast<bool>(cell.state & Block::State::Bomb)) {
             ++cell.value;
           }
         }
@@ -179,5 +214,6 @@ void GameScreen::GenerateGame() {
     }
     std::cout<<std::endl;
   }
+  isGenerated = true;
 }
 

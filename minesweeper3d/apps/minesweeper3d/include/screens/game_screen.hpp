@@ -30,16 +30,16 @@ struct CoordHash {
 
 struct Block {
 
-  enum class State : std::uint8_t {
-    Hidden = 0,
-    Revealed = 1,
-    Snake = 2,
-    Flagged = 3,
+  enum State : std::uint8_t {
+    Hidden = 0b0000,
+    Revealed = 0b0001,
+    Snake = 0b0010,
+    Flagged = 0b0100,
+    Bomb = 0b1000
   };
 
   std::uint8_t value = 0;
-  State state = State::Hidden;
-  bool isBomb = false;
+  Block::State state = Block::State::Hidden;
 };
 
 class GameScreen : public Screen {
@@ -57,7 +57,7 @@ public:
 
 private:
 
-  void GenerateGame();
+  void GenerateGame(Coord safeBlock);
   static void DrawBlock(Coord pos, Block block, int blockSize);
   void RevealFrom(Coord pos);
 
@@ -72,5 +72,6 @@ private:
 
   std::vector<Block> blockGrid;
   
+  bool isGenerated = false;
 };
 
