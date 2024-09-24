@@ -1,5 +1,7 @@
 #pragma once
 
+#include "screens/lose_screen.hpp"
+#include "screens/win_screen.hpp"
 #include <screen.hpp>
 #include <screens/new_game_menu.hpp>
 #include <screens/game_screen.hpp>
@@ -15,7 +17,7 @@ constexpr bool tuple_contains([[maybe_unused]] const std::tuple<T...>& tuple) {
 class ScreenManager {
 private:
   // we add all of our screens here:
-  std::tuple<std::unique_ptr<NewGameMenu>, std::unique_ptr<GameScreen>> screens;
+  std::tuple<std::unique_ptr<WinScreen>, std::unique_ptr<LoseScreen>, std::unique_ptr<NewGameMenu>, std::unique_ptr<GameScreen>> screens;
 
   Screen* activeScreen = nullptr;
 public:

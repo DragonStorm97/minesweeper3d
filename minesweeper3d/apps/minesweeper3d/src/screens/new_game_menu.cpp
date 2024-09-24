@@ -11,7 +11,7 @@ void NewGameMenu::Draw(raylib::Vector2 size)
 {
   const raylib::Vector2 buttonSize{size.x/4, size.y/10};
   
-  raylib::DrawText("New Game" , static_cast<int>(size.y/2) + raylib::TextLength("New Game")/2, static_cast<int>(size.x * 0.02F), 25, raylib::Color::White());
+  raylib::DrawText("New Game" , static_cast<int>(size.x/2) + raylib::TextLength("New Game")/2, static_cast<int>(size.y * 0.02F), 25, raylib::Color::White());
 
   const raylib::Vector2 offset {size*0.1F};
   const raylib::Vector2 innerSize {size*0.9F};

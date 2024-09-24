@@ -35,6 +35,7 @@
       return raylib::Color::Blue();
 }
 
+// TODO: only call this when blockSize had changed
 int getTextSize(int blockSize) {
   static int textSize = blockSize;
   while(raylib::MeasureText("X", textSize) > (blockSize-5)) {
@@ -44,7 +45,7 @@ int getTextSize(int blockSize) {
 }
 
 void GameScreen::DrawBlock(Coord pos, Block block, int blockSize) {
-  // TODO: select a text size that fits into blockSize
+  // TODO: only call this when blockSize had changed
   const auto textSize = getTextSize(blockSize);
 
   if (static_cast<bool>(block.state & Block::State::Revealed)) {
@@ -133,8 +134,7 @@ void GameScreen::RevealFrom(Coord pos) {
     if((hitBlock.state & Block::State::Bomb) != Block::State::Bomb) {
       --numSafeBlocks;
       if (numSafeBlocks == 0) {
-        // TODO:
-        // GetScreenManager()->GoTo<WinScreen>();
+        GetScreenManager()->GoTo<class WinScreen>();
       }
       if(hitBlock.value == 0) {
         for(int x = -1; x <= 1; ++x) {
@@ -150,8 +150,7 @@ void GameScreen::RevealFrom(Coord pos) {
         }
       }
     } else {
-      // TODO:
-      // GetScreenManager()->GoTo<LoseScreen>();
+      GetScreenManager()->GoTo<class LoseScreen>();
     }
   }
 }
