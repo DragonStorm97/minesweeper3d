@@ -20,6 +20,6 @@ private:
 
   int gridSize = 3;
   int numBombs = 1;
-
+  int snakeSpeed = 1;
 };
 

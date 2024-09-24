@@ -13,6 +13,8 @@ void GameScreen::Draw(raylib::Vector2 size)
   raylib::DrawText("MINESWEEPER!!!", buttonSize.x, buttonSize.y, 25, raylib::Color::White());
   // TODO: add pause menu button/on escape
   // TODO: add game logic...
+  // Snake can reverse direction
+  //
 }
 
 void GameScreen::CameFrom(Screen* screen) {
@@ -20,6 +22,8 @@ void GameScreen::CameFrom(Screen* screen) {
     if(auto* ngm = dynamic_cast<NewGameMenu*>(screen); ngm != nullptr) {
       gridSize = static_cast<int>(ngm->GetGridSize());
       numBombs = static_cast<int>(ngm->GetNumBombs());
+      snakeSpeed = static_cast<int>(ngm->GetSnakeSpeed());
+      // TODO: reset any other data here, and regenerate board
     }
   }
 }
