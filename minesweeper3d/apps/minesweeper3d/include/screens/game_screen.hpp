@@ -51,14 +51,14 @@ public:
   GameScreen& operator=(GameScreen&&) = delete;
   ~GameScreen() override = default;
 
-  void Draw(raylib::Vector2 windowSize) override;
+  void Draw(raylib::Vector2 windowSize, bool wasResized) override;
 
   void CameFrom(Screen* screen) override;
 
 private:
 
   void GenerateGame(Coord safeBlock);
-  static void DrawBlock(Coord pos, Block block, int blockSize);
+  void DrawBlock(Coord pos, Block block, int blockSize) const;
   void RevealFrom(Coord pos);
 
   int gridSize = 3;
@@ -73,5 +73,6 @@ private:
   std::vector<Block> blockGrid;
   
   bool isGenerated = false;
+  int blockTextSize = 25;
 };
 

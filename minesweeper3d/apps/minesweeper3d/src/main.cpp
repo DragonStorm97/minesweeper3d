@@ -9,5 +9,3 @@ int main()
   Game game(Width, Height, "Minesweeper3d", TargetFps);
   game.Start();
 }
-
-

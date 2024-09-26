@@ -8,7 +8,7 @@
 #include <screens/win_screen.hpp>
 #include <screen_manager.hpp>
 
-void WinScreen::Draw(raylib::Vector2 size)
+void WinScreen::Draw(raylib::Vector2 size, bool wasResized)
 {
   raylib::DrawText("You Win!!" , static_cast<int>(size.x/2) - raylib::MeasureText("You Win!!", 55)/2, static_cast<int>(size.y/3), 55, raylib::Color::Green());
 

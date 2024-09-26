@@ -7,7 +7,7 @@
 #include <screens/new_game_menu.hpp>
 #include <screen_manager.hpp>
 
-void NewGameMenu::Draw(raylib::Vector2 size)
+void NewGameMenu::Draw(raylib::Vector2 size, bool wasResized)
 {
   const raylib::Vector2 buttonSize{size.x/4, size.y/10};
   

@@ -25,6 +25,8 @@ CheckOptions:
   - key: readability-implicit-bool-conversion.AllowPointerConditions
     value: true
   - key: readability-identifier-length.IgnoredVariableNames
-    value: "x|y|z"
+    value: "i|j|k|w|x|y|z"
   - key: readability-identifier-length.IgnoredParameterNames
-    value: "x|y|z"
+    value: "i|j|k|w|x|y|z"
+  - key: readability-identifier-length.IgnoredLoopCounterNames
+    value: "i|j|k|w|x|y|z"

@@ -1,16 +1,17 @@
 #pragma once
-#include <string>
-#include <screen_manager.hpp>
 #include <raylib-cpp.hpp>
+#include <screen_manager.hpp>
+#include <string>
 
 class Game {
-public:
-
+  public:
   ScreenManager screenManager;
 
   std::string title;
   raylib::Window main_window;
   int target_fps;
+  int screenWidth;
+  int screenHeight;
 
   Game(const Game&) = delete;
   Game(Game&&) = delete;
@@ -25,5 +26,3 @@ public:
 
   ~Game();
 };
-
-

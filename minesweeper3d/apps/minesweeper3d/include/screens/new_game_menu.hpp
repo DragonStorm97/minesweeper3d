@@ -12,7 +12,7 @@ public:
   NewGameMenu& operator=(NewGameMenu&&) = delete;
   ~NewGameMenu() override = default;
 
-  void Draw(raylib::Vector2 windowSize) override;
+  void Draw(raylib::Vector2 windowSize, bool wasResized) override;
 
   [[nodiscard]] float GetGridSize() const {
     return gridSize;

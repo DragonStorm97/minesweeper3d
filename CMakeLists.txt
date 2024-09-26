@@ -22,7 +22,7 @@ if(minesweeper3d_IS_TOP_LEVEL_PROJECT)
   option(minesweeper3d_ENABLE_CATCH2_TESTS "Enable Tests for minesweeper3d" ON)
   option(minesweeper3d_ENABLE_GLOBS "Enable GLOB sourcing for minesweeper3d" ON)
   option(minesweeper3d_ENABLE_RAYLIB "Enable Raylib for minesweeper3d" ON)
-  option(minesweeper3d_ENABLE_FLECS "Enable flecs for minesweeper3d" ON)
+  option(minesweeper3d_ENABLE_FLECS "Enable flecs for minesweeper3d" OFF)
   option(minesweeper3d_BUILD_APPS "Enable App building for minesweeper3d" ON)
   option(minesweeper3d_STANDALONE "Enable App building for minesweeper3d" OFF)
   # create a symbolic link to the compile_commands file:

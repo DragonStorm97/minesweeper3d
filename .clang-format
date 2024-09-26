@@ -10,3 +10,4 @@ SpaceAfterCStyleCast: true
 SpaceBeforeCpp11BracedList: false
 SpacesBeforeTrailingComments: 2
 TabWidth: 2
+IndentWidth: 2

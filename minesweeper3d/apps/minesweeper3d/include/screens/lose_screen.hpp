@@ -11,6 +11,6 @@ public:
   LoseScreen& operator=(LoseScreen&&) = delete;
   ~LoseScreen() override = default;
 
-  void Draw(raylib::Vector2 windowSize) override;
+  void Draw(raylib::Vector2 windowSize, bool wasResized) override;
 private:
 };
