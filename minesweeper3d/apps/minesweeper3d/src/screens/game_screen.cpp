@@ -6,7 +6,6 @@
 #include "raylib.h"
 #include "screens/new_game_menu.hpp"
 #include <cstddef>
-#include <iostream>
 #include <random>
 #include <raygui.h>
 #include <raylib-cpp.hpp>
@@ -223,13 +222,6 @@ void GameScreen::GenerateGame(Coord safeBlock)
         }
       }
     }
-  }
-
-  for (int y = 0; y < gridSize; ++y) {
-    for (int x = 0; x < gridSize; ++x) {
-      std::cout << static_cast<int>(blockGrid[Coord{x, y}.As1D(gridSize)].value) << " ";
-    }
-    std::cout << std::endl;
   }
   isGenerated = true;
 }
