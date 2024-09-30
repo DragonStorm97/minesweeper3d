@@ -101,16 +101,17 @@ void GameScreen::Draw(float deltatime, raylib::Vector2 size, bool wasResized)
   // TODO: Snake can reverse direction?
 
   if (snakeMode) {
-    if (raylib::Keyboard::IsKeyPressed(KEY_UP) || raylib::Keyboard::IsKeyPressed(KEY_W)) {
+    int key = ::GetKeyPressed();
+    if (key == KEY_UP || key == KEY_W) {
       SnakeDirection.y = -1;
       SnakeDirection.x = 0;
-    } else if (raylib::Keyboard::IsKeyPressed(KEY_DOWN) || raylib::Keyboard::IsKeyPressed(KEY_S)) {
+    } else if (key == KEY_DOWN || key == KEY_S) {
       SnakeDirection.y = 1;
       SnakeDirection.x = 0;
-    } else if (raylib::Keyboard::IsKeyPressed(KEY_LEFT) || raylib::Keyboard::IsKeyPressed(KEY_A)) {
+    } else if (key == KEY_LEFT || key == KEY_A) {
       SnakeDirection.x = -1;
       SnakeDirection.y = 0;
-    } else if (raylib::Keyboard::IsKeyPressed(KEY_RIGHT) || raylib::Keyboard::IsKeyPressed(KEY_D)) {
+    } else if (key == KEY_RIGHT || key == KEY_D) {
       SnakeDirection.x = 1;
       SnakeDirection.y = 0;
     } else if (snakeSpeed == 0) {
