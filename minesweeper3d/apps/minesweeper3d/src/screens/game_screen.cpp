@@ -85,7 +85,7 @@ void GameScreen::Draw(float deltatime, raylib::Vector2 size, bool wasResized)
 
   auto gridDim = blockSize * gridSize;
   const float halfGrid = gridDim * 0.5F;
-  offset = (size * 0.5F) - raylib::Vector2{halfGrid, halfGrid};
+  offset = ((innerSize + offset) * 0.5F) - raylib::Vector2{halfGrid, halfGrid};
 
   auto gridSizeSqr = static_cast<std::size_t>(gridSize) * static_cast<std::size_t>(gridSize);
   for (std::size_t blockIdx = 0; blockIdx < gridSizeSqr; ++blockIdx) {
@@ -129,8 +129,7 @@ void GameScreen::Draw(float deltatime, raylib::Vector2 size, bool wasResized)
     } else {
       const auto lastBlockPos = snakeBlocks.back().As1D(gridSize);
       const auto prevBlockPos = Coord::FromVector2(snakePosition).As1D(gridSize);
-      // raylib::DrawText(TextFormat("%d", prevSnakeBlock.state), 0, 0, 40, raylib::Color::Pink());
-      snakePosition += Coord::ToVector2(SnakeDirection) * deltatime * (snakeSpeed < 1 ? 1 : snakeSpeed) * blockSize * 0.1;
+      snakePosition += Coord::ToVector2(SnakeDirection) * deltatime * (snakeSpeed < 1 ? 1 : snakeSpeed * 0.1) * blockSize;
 
       // if we've moved to another block
       if (const auto snakeBlockPos = Coord::FromVector2(snakePosition).As1D(gridSize); snakeBlockPos != prevBlockPos) {
