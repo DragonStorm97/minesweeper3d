@@ -1,4 +1,5 @@
 #include "game.hpp"
+#include "Color.hpp"
 #include "Functions.hpp"
 #include "Window.hpp"
 #include "libminesweeper3d.hpp"
@@ -34,7 +35,7 @@ void Game::UpdateDrawFrame()
 {
   static auto windowSize = main_window.GetSize();
 
-  const double time = GetTime();
+  const float deltatime = GetFrameTime();
 
   main_window.BeginDrawing();
 
@@ -49,7 +50,8 @@ void Game::UpdateDrawFrame()
 #endif
   }
 
-  screenManager.GetActiveScreen().Draw(main_window.GetSize(), main_window.IsResized());
+  // raylib::DrawText(TextFormat("%1.3fs", deltatime), 0, 0, 40, raylib::Color::Pink());
+  screenManager.GetActiveScreen().Draw(deltatime, main_window.GetSize(), main_window.IsResized());
 
   main_window.EndDrawing();
 }

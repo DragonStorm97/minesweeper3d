@@ -3,7 +3,7 @@
 #include <screen.hpp>
 
 class WinScreen : public Screen {
-public:
+  public:
   WinScreen() = default;
   WinScreen(const WinScreen&) = default;
   WinScreen(WinScreen&&) = delete;
@@ -11,6 +11,7 @@ public:
   WinScreen& operator=(WinScreen&&) = delete;
   ~WinScreen() override = default;
 
-  void Draw(raylib::Vector2 windowSize, bool wasResized) override;
-private:
+  void Draw(float deltatime, raylib::Vector2 windowSize, bool wasResized) override;
+
+  private:
 };

@@ -17,7 +17,7 @@ class Screen {
     screenManager = manager;
   };
 
-  virtual void Draw(raylib::Vector2 windowSize, bool wasResized) = 0;
+  virtual void Draw(float deltatime, raylib::Vector2 windowSize, bool wasResized) = 0;
 
   [[nodiscard]] class ScreenManager* GetScreenManager() const
   {

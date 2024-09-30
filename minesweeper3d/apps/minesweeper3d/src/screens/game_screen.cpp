@@ -1,9 +1,12 @@
 
 #include "screens/game_screen.hpp"
 #include "Color.hpp"
+#include "Keyboard.hpp"
 #include "Mouse.hpp"
 #include "Rectangle.hpp"
+#include "Vector2.hpp"
 #include "raylib.h"
+#include "screens/lose_screen.hpp"
 #include "screens/new_game_menu.hpp"
 #include <cstddef>
 #include <random>
@@ -12,7 +15,7 @@
 #include <screen_manager.hpp>
 #include <unordered_set>
 
-[[nodiscard]] raylib::Color GetTileColor(std::uint8_t value)
+[[nodiscard]] constexpr Color GetTileColor(std::uint8_t value)
 {
   switch (value) {
   case 1:
@@ -35,7 +38,6 @@
   return raylib::Color::Blue();
 }
 
-// TODO: only call this when blockSize had changed
 int getTextSize(int blockSize)
 {
   static int textSize = blockSize;
@@ -48,8 +50,8 @@ int getTextSize(int blockSize)
 void GameScreen::DrawBlock(Coord pos, Block block, int blockSize) const
 {
   if (static_cast<bool>(block.state & Block::State::Revealed)) {
-    pos.x += blockSize / 10;
-    pos.y += blockSize / 10;
+    // pos.x += blockSize / 50;
+    // pos.y += blockSize / 50;
     if (static_cast<bool>(block.state & Block::State::Snake)) {
       raylib::Rectangle{static_cast<float>(pos.x), static_cast<float>(pos.y), blockSize * 0.95F, blockSize * 0.95F}.Draw(raylib::Color::SkyBlue());
     }
@@ -70,7 +72,7 @@ void GameScreen::DrawBlock(Coord pos, Block block, int blockSize) const
   }
 }
 
-void GameScreen::Draw(raylib::Vector2 size, bool wasResized)
+void GameScreen::Draw(float deltatime, raylib::Vector2 size, bool wasResized)
 {
   const raylib::Vector2 buttonSize{size.x / 3, size.y / 10};
   raylib::Vector2 offset{size * 0.1F};
@@ -83,30 +85,88 @@ void GameScreen::Draw(raylib::Vector2 size, bool wasResized)
 
   auto gridDim = blockSize * gridSize;
   const float halfGrid = gridDim * 0.5F;
-  offset = ((innerSize + offset) * 0.5F) - raylib::Vector2{halfGrid, halfGrid};
+  offset = (size * 0.5F) - raylib::Vector2{halfGrid, halfGrid};
 
   auto gridSizeSqr = static_cast<std::size_t>(gridSize) * static_cast<std::size_t>(gridSize);
   for (std::size_t blockIdx = 0; blockIdx < gridSizeSqr; ++blockIdx) {
-    // if(auto block = blockGrid[blockIdx]; block.value > 0)
-    {
-      auto coord = Coord::AsCoord(static_cast<int>(blockIdx), gridSize);
-      DrawBlock({static_cast<int>(offset.x + (blockSize * coord.x)), static_cast<int>(offset.y + (blockSize * coord.y))}, blockGrid[blockIdx], blockSize);
-    }
+    auto coord = Coord::AsCoord(static_cast<int>(blockIdx), gridSize);
+    DrawBlock({static_cast<int>(offset.x + (blockSize * coord.x)), static_cast<int>(offset.y + (blockSize * coord.y))}, blockGrid[blockIdx], blockSize);
   }
 
-  // TODO: add pause menu button/on escape
-  // TODO: add game logic...
-  // Snake can reverse direction
-  const Rectangle gridRect{offset.x, offset.y, static_cast<float>(gridDim), static_cast<float>(gridDim)};
+  if (raylib::Keyboard::IsKeyPressed(KEY_Q)) {
+    GetScreenManager()->GoTo<LoseScreen>();
+    return;
+  }
+
+  // TODO: Snake can reverse direction?
 
   if (snakeMode) {
+    if (raylib::Keyboard::IsKeyPressed(KEY_UP) || raylib::Keyboard::IsKeyPressed(KEY_W)) {
+      SnakeDirection.y = -1;
+      SnakeDirection.x = 0;
+    } else if (raylib::Keyboard::IsKeyPressed(KEY_DOWN) || raylib::Keyboard::IsKeyPressed(KEY_S)) {
+      SnakeDirection.y = 1;
+      SnakeDirection.x = 0;
+    } else if (raylib::Keyboard::IsKeyPressed(KEY_LEFT) || raylib::Keyboard::IsKeyPressed(KEY_A)) {
+      SnakeDirection.x = -1;
+      SnakeDirection.y = 0;
+    } else if (raylib::Keyboard::IsKeyPressed(KEY_RIGHT) || raylib::Keyboard::IsKeyPressed(KEY_D)) {
+      SnakeDirection.x = 1;
+      SnakeDirection.y = 0;
+    } else if (snakeSpeed == 0) {
+      SnakeDirection.x = 0;
+      SnakeDirection.y = 0;
+    }
+
+    if (!isGenerated) {
+      snakePosition = raylib::Vector2{static_cast<float>(gridSize / 2), static_cast<float>(gridSize / 2)};
+      GenerateGame(Coord::FromVector2(snakePosition));
+      snakeBlocks.emplace_front(Coord::FromVector2(snakePosition));
+      blockTextSize = getTextSize(blockSize);
+      auto& frontSnakeBlock = blockGrid[Coord::FromVector2(snakePosition).As1D(gridSize)];
+      frontSnakeBlock.state = static_cast<Block::State>(frontSnakeBlock.state | Block::State::Snake);
+
+    } else {
+      const auto lastBlockPos = snakeBlocks.back().As1D(gridSize);
+      const auto prevBlockPos = Coord::FromVector2(snakePosition).As1D(gridSize);
+      // raylib::DrawText(TextFormat("%d", prevSnakeBlock.state), 0, 0, 40, raylib::Color::Pink());
+      snakePosition += Coord::ToVector2(SnakeDirection) * deltatime * (snakeSpeed < 1 ? 1 : snakeSpeed) * blockSize * 0.1;
+
+      // if we've moved to another block
+      if (const auto snakeBlockPos = Coord::FromVector2(snakePosition).As1D(gridSize); snakeBlockPos != prevBlockPos) {
+        // set the front position
+        auto& frontSnakeBlock = blockGrid[snakeBlockPos];
+        // if we run into an already-snake block, we lose
+        if (static_cast<bool>(frontSnakeBlock.state & Block::State::Snake)) {
+          GetScreenManager()->GoTo<LoseScreen>();
+          return;
+        }
+
+        // unset and remove the last block of the snake, if we aren't revealing a new block
+        if (static_cast<bool>(frontSnakeBlock.state & Block::State::Revealed)) {
+          auto& lastSnakeBlock = blockGrid[lastBlockPos];
+          lastSnakeBlock.state = static_cast<Block::State>(lastSnakeBlock.state & (~Block::State::Snake));
+          snakeBlocks.pop_back();
+        }
+        snakeBlocks.emplace_front(Coord::AsCoord(snakeBlockPos, gridSize));
+        frontSnakeBlock.state = static_cast<Block::State>(frontSnakeBlock.state | Block::State::Snake);
+      }
+    }
+
+    raylib::DrawText(TextFormat("%d", snakeBlocks.size()), 0, 0, 40, raylib::Color::Pink());
+    RevealFrom(Coord::FromVector2(snakePosition));
+
+    // if we go out-of-bounds, we lose
+    if (snakePosition.x > gridSize || snakePosition.y > gridSize || snakePosition.y < 0 || snakePosition.x < 0) {
+      GetScreenManager()->GoTo<LoseScreen>();
+      return;
+    }
+
   } else {
     const auto pos = raylib::Mouse::GetPosition();
-    if (raylib::Mouse::IsButtonPressed(MOUSE_BUTTON_LEFT)) {
-      // std::cout<<"LMB pressed at:"<<raylib::Mouse::GetX()<<","<<raylib::Mouse::GetY()<<std::endl;
+    if (raylib::Mouse::IsButtonReleased(MOUSE_BUTTON_LEFT)) {
       // check to see if we clicked in the grid
       if (pos.x >= offset.x && pos.y >= offset.y && pos.x < (offset.x + (gridDim)) && pos.y < offset.y + (gridDim)) {
-        // std::cout<<"CLICKED INSIDE GRID!"<<Coord{static_cast<int>((pos.x - offset.x)/(blockSize)), static_cast<int>((pos.y - offset.y)/(blockSize))}.As1D(gridSize)<<std::endl;
         const Coord gridPos{static_cast<int>((pos.x - offset.x) / (blockSize)), static_cast<int>((pos.y - offset.y) / (blockSize))};
         if (!isGenerated) {
           GenerateGame(gridPos);
@@ -114,8 +174,7 @@ void GameScreen::Draw(raylib::Vector2 size, bool wasResized)
         }
         RevealFrom(gridPos);
       }
-    }
-    if (raylib::Mouse::IsButtonPressed(MOUSE_BUTTON_RIGHT)) {
+    } else if (raylib::Mouse::IsButtonReleased(MOUSE_BUTTON_RIGHT)) {
       // check to see if we clicked in the grid
       if (pos.x >= offset.x && pos.y >= offset.y && pos.x < (offset.x + (gridDim)) && pos.y < offset.y + (gridDim)) {
         const Coord gridPos{static_cast<int>((pos.x - offset.x) / (blockSize)), static_cast<int>((pos.y - offset.y) / (blockSize))};
@@ -167,9 +226,11 @@ void GameScreen::CameFrom(Screen* screen)
       numBombs = static_cast<int>(ngm->GetNumBombs());
       snakeSpeed = static_cast<int>(ngm->GetSnakeSpeed());
       snakeMode = ngm->GetSnakeMode();
+      snakePosition = raylib::Vector2{};
+      SnakeDirection = {};
       numSafeBlocks = (gridSize * gridSize) - numBombs;
       isGenerated = false;
-      const auto gridSizeSqr = static_cast<std::size_t>(gridSize * gridSize);
+      const auto gridSizeSqr = static_cast<std::size_t>(gridSize) * static_cast<std::size_t>(gridSize);
       blockGrid = std::vector<Block>(gridSizeSqr, Block{});
     }
   }
@@ -198,7 +259,7 @@ void GameScreen::GenerateGame(Coord safeBlock)
 {
   snakeBlocks.clear();
 
-  const auto gridSizeSqr = static_cast<std::size_t>(gridSize * gridSize);
+  const auto gridSizeSqr = static_cast<std::size_t>(gridSize) * static_cast<std::size_t>(gridSize);
 
   // just used for while we are generating
   // Generate (unique) Bomb Locations

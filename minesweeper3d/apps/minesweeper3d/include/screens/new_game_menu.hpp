@@ -4,7 +4,7 @@
 #include <screen.hpp>
 
 class NewGameMenu : public Screen {
-public:
+  public:
   NewGameMenu() = default;
   NewGameMenu(const NewGameMenu&) = default;
   NewGameMenu(NewGameMenu&&) = delete;
@@ -12,21 +12,26 @@ public:
   NewGameMenu& operator=(NewGameMenu&&) = delete;
   ~NewGameMenu() override = default;
 
-  void Draw(raylib::Vector2 windowSize, bool wasResized) override;
+  void Draw(float deltatime, raylib::Vector2 windowSize, bool wasResized) override;
 
-  [[nodiscard]] float GetGridSize() const {
+  [[nodiscard]] float GetGridSize() const
+  {
     return gridSize;
   }
-  [[nodiscard]] float GetNumBombs() const {
+  [[nodiscard]] float GetNumBombs() const
+  {
     return numBombs;
   }
-  [[nodiscard]] float GetSnakeSpeed() const {
+  [[nodiscard]] float GetSnakeSpeed() const
+  {
     return snakeSpeed;
   }
-  [[nodiscard]] bool GetSnakeMode() const {
+  [[nodiscard]] bool GetSnakeMode() const
+  {
     return snakeMode;
   }
-private:
+
+  private:
   float gridSize = 3;
   float numBombs = 1;
   // the speed of the snake, in blocks/s

@@ -8,28 +8,40 @@
 
 struct Coord {
   int x, y;
-  [[nodiscard]] bool operator==(const Coord& other) const {
+
+  [[nodiscard]] bool operator==(const Coord& other) const
+  {
     return x == other.x && y == other.y;
   }
-  [[nodiscard]] std::size_t As1D(int dimSize) const {
+  [[nodiscard]] std::size_t As1D(int dimSize) const
+  {
     return (x * dimSize) + y;
   }
 
-  [[nodiscard]] static Coord AsCoord(int idx, int dimSize) {
-    return Coord(idx/dimSize, idx % dimSize);
+  [[nodiscard]] static Coord AsCoord(std::size_t idx, int dimSize)
+  {
+    return Coord(idx / dimSize, idx % dimSize);
   }
 
+  static Coord FromVector2(const raylib::Vector2& vec) noexcept
+  {
+    return Coord{static_cast<int>(vec.x), static_cast<int>(vec.y)};
+  }
+
+  static raylib::Vector2 ToVector2(const Coord& coord) noexcept
+  {
+    return {static_cast<float>(coord.x), static_cast<float>(coord.y)};
+  }
 };
 
 struct CoordHash {
-  std::size_t operator()(const Coord& coord) const {
+  std::size_t operator()(const Coord& coord) const
+  {
     return std::hash<int>()(coord.x) ^ std::hash<int>()(coord.y);
   }
 };
 
-
 struct Block {
-
   enum State : std::uint8_t {
     Hidden = 0b0000,
     Revealed = 0b0001,
@@ -43,7 +55,7 @@ struct Block {
 };
 
 class GameScreen : public Screen {
-public:
+  public:
   GameScreen() = default;
   GameScreen(const GameScreen&) = default;
   GameScreen(GameScreen&&) = delete;
@@ -51,12 +63,11 @@ public:
   GameScreen& operator=(GameScreen&&) = delete;
   ~GameScreen() override = default;
 
-  void Draw(raylib::Vector2 windowSize, bool wasResized) override;
+  void Draw(float deltatime, raylib::Vector2 windowSize, bool wasResized) override;
 
   void CameFrom(Screen* screen) override;
 
-private:
-
+  private:
   void GenerateGame(Coord safeBlock);
   void DrawBlock(Coord pos, Block block, int blockSize) const;
   void RevealFrom(Coord pos);
@@ -71,8 +82,10 @@ private:
   std::list<Coord> snakeBlocks;
 
   std::vector<Block> blockGrid;
-  
+
   bool isGenerated = false;
   int blockTextSize = 25;
-};
 
+  Coord SnakeDirection{0, 0};
+  raylib::Vector2 snakePosition;
+};
