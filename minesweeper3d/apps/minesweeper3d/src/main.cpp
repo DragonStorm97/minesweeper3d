@@ -6,6 +6,6 @@ constexpr static int TargetFps = 60;
 
 int main()
 {
-  Game game(Width, Height, "Minesweeper3d", TargetFps);
+  Game game(Width, Height, "Minesweep-Snake", TargetFps);
   game.Start();
 }
