@@ -47,26 +47,26 @@ int getTextSize(int blockSize)
   return textSize;
 }
 
-void GameScreen::DrawBlock(Coord pos, Block block, int blockSize) const
+void GameScreen::DrawBlock(Coord pos, Block block, float blockSize) const
 {
   if (static_cast<bool>(block.state & Block::State::Revealed)) {
-    // pos.x += blockSize / 50;
-    // pos.y += blockSize / 50;
     if (static_cast<bool>(block.state & Block::State::Snake)) {
-      raylib::Rectangle{static_cast<float>(pos.x), static_cast<float>(pos.y), blockSize * 0.95F, blockSize * 0.95F}.Draw(raylib::Color::SkyBlue());
+      // raylib::Rectangle{static_cast<float>(pos.x) + (blockSize * 0.025F), static_cast<float>(pos.y) + (blockSize * 0.025F), static_cast<float>(blockSize), static_cast<float>(blockSize)}.Draw(raylib::Color::SkyBlue());
+      raylib::Rectangle{static_cast<float>(pos.x), static_cast<float>(pos.y), blockSize, blockSize}.Draw(raylib::Color::SkyBlue());
     }
     if (static_cast<bool>(block.state & Block::State::Bomb)) {
-      raylib::DrawText("X", pos.x + (blockSize / 2) - (raylib::MeasureText("X", blockTextSize) / 2), pos.y, blockTextSize, raylib::Color::Red());
+      raylib::DrawText("X", pos.x + (blockSize * 0.5F) - (raylib::MeasureText("X", blockTextSize) * 0.5F), pos.y, blockTextSize, raylib::Color::Red());
     } else if (block.value > 0) {
       const char* txt = TextFormat("%1.0d", block.value);
-      raylib::DrawText(txt, pos.x + (blockSize / 2) - (raylib::MeasureText(txt, blockTextSize) / 2), pos.y, blockTextSize, GetTileColor(block.value));
+      raylib::DrawText(txt, pos.x + (blockSize * 0.5F) - (raylib::MeasureText(txt, blockTextSize) * 0.5F), pos.y, blockTextSize, GetTileColor(block.value));
     }
     return;
   } else {
+    // raylib::Rectangle{static_cast<float>(pos.x) + (blockSize * 0.025F), static_cast<float>(pos.y) + (blockSize * 0.025F), blockSize * 0.95F, blockSize * 0.95F}.Draw(raylib::Color::Gray());
     raylib::Rectangle{static_cast<float>(pos.x), static_cast<float>(pos.y), blockSize * 0.95F, blockSize * 0.95F}.Draw(raylib::Color::Gray());
     if (static_cast<bool>(block.state & Block::State::Flagged)) {
       const char* txt = "|>";
-      raylib::DrawText(txt, pos.x + (blockSize / 2) - (raylib::MeasureText(txt, blockTextSize) / 2), pos.y, blockTextSize, raylib::Color::Magenta());
+      raylib::DrawText(txt, pos.x + (blockSize * 0.5F) - (raylib::MeasureText(txt, blockTextSize) * 0.5F), pos.y, blockTextSize, raylib::Color::Magenta());
       return;
     }
   }
@@ -74,13 +74,15 @@ void GameScreen::DrawBlock(Coord pos, Block block, int blockSize) const
 
 void GameScreen::Draw(float deltatime, raylib::Vector2 size, bool wasResized)
 {
+  auto minSize = raylib::Vector2{std::min(size.x, size.y), std::min(size.x, size.y)};
+
   const raylib::Vector2 buttonSize{size.x / 3, size.y / 10};
   raylib::Vector2 offset{size * 0.1F};
   const raylib::Vector2 innerSize{size * 0.9F};
 
-  const auto blockSize = static_cast<int>(DrawOffsetGrid(offset, gridSize, innerSize));
+  const auto blockSize = DrawOffsetGrid(offset, gridSize, innerSize);
   if (wasResized) {
-    blockTextSize = getTextSize(blockSize);
+    blockTextSize = getTextSize(static_cast<int>(blockSize));
   }
 
   auto gridDim = blockSize * gridSize;
@@ -89,7 +91,7 @@ void GameScreen::Draw(float deltatime, raylib::Vector2 size, bool wasResized)
 
   auto gridSizeSqr = static_cast<std::size_t>(gridSize) * static_cast<std::size_t>(gridSize);
   for (std::size_t blockIdx = 0; blockIdx < gridSizeSqr; ++blockIdx) {
-    auto coord = Coord::AsCoord(static_cast<int>(blockIdx), gridSize);
+    auto coord = Coord::AsCoord(blockIdx, gridSize);
     DrawBlock({static_cast<int>(offset.x + (blockSize * coord.x)), static_cast<int>(offset.y + (blockSize * coord.y))}, blockGrid[blockIdx], blockSize);
   }
 
@@ -153,7 +155,6 @@ void GameScreen::Draw(float deltatime, raylib::Vector2 size, bool wasResized)
       }
     }
 
-    raylib::DrawText(TextFormat("%d", snakeBlocks.size()), 0, 0, 40, raylib::Color::Pink());
     RevealFrom(Coord::FromVector2(snakePosition));
 
     // if we go out-of-bounds, we lose

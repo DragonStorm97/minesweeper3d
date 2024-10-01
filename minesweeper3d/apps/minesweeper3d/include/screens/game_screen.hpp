@@ -69,7 +69,7 @@ class GameScreen : public Screen {
 
   private:
   void GenerateGame(Coord safeBlock);
-  void DrawBlock(Coord pos, Block block, int blockSize) const;
+  void DrawBlock(Coord pos, Block block, float blockSize) const;
   void RevealFrom(Coord pos);
 
   int gridSize = 3;
