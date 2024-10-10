@@ -20,7 +20,7 @@ Checks: "bugprone-*,
 WarningsAsErrors: ""
 HeaderFilterRegex: ""
 FormatStyle: none
-
+FastCheckFilter: None
 CheckOptions:
   - key: readability-implicit-bool-conversion.AllowPointerConditions
     value: true

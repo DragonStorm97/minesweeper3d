@@ -123,10 +123,18 @@ void GameScreen::Draw(float deltatime, raylib::Vector2 size, bool wasResized)
 
     if (!isGenerated) {
       snakePosition = raylib::Vector2{static_cast<float>(gridSize / 2), static_cast<float>(gridSize / 2)};
-      GenerateGame(Coord::FromVector2(snakePosition));
-      snakeBlocks.emplace_front(Coord::FromVector2(snakePosition));
+      std::unordered_set<Coord, CoordHash> safeBlocks;
+      auto snakeGridPos = Coord::FromVector2(snakePosition);
+      // we make the immediate surrounding blocks safe for the snake so the player isn't immediately destroyed
+      safeBlocks.insert({snakeGridPos.x - 1, snakeGridPos.y + 1});
+      safeBlocks.insert({snakeGridPos.x + 1, snakeGridPos.y - 1});
+      safeBlocks.insert({snakeGridPos.x - 1, snakeGridPos.y - 1});
+      safeBlocks.insert({snakeGridPos.x + 1, snakeGridPos.y + 1});
+      safeBlocks.insert(snakeGridPos);
+      GenerateGame(safeBlocks);
+      snakeBlocks.emplace_front(snakeGridPos);
       blockTextSize = getTextSize(blockSize);
-      auto& frontSnakeBlock = blockGrid[Coord::FromVector2(snakePosition).As1D(gridSize)];
+      auto& frontSnakeBlock = blockGrid[snakeGridPos.As1D(gridSize)];
       frontSnakeBlock.state = static_cast<Block::State>(frontSnakeBlock.state | Block::State::Snake);
 
     } else {
@@ -170,7 +178,9 @@ void GameScreen::Draw(float deltatime, raylib::Vector2 size, bool wasResized)
       if (pos.x >= offset.x && pos.y >= offset.y && pos.x < (offset.x + (gridDim)) && pos.y < offset.y + (gridDim)) {
         const Coord gridPos{static_cast<int>((pos.x - offset.x) / (blockSize)), static_cast<int>((pos.y - offset.y) / (blockSize))};
         if (!isGenerated) {
-          GenerateGame(gridPos);
+          std::unordered_set<Coord, CoordHash> safeBlocks;
+          safeBlocks.insert(gridPos);
+          GenerateGame(safeBlocks);
           blockTextSize = getTextSize(blockSize);
         }
         RevealFrom(gridPos);
@@ -180,7 +190,9 @@ void GameScreen::Draw(float deltatime, raylib::Vector2 size, bool wasResized)
       if (pos.x >= offset.x && pos.y >= offset.y && pos.x < (offset.x + (gridDim)) && pos.y < offset.y + (gridDim)) {
         const Coord gridPos{static_cast<int>((pos.x - offset.x) / (blockSize)), static_cast<int>((pos.y - offset.y) / (blockSize))};
         if (!isGenerated) {
-          GenerateGame(gridPos);
+          std::unordered_set<Coord, CoordHash> safeBlocks;
+          safeBlocks.insert(gridPos);
+          GenerateGame(safeBlocks);
           blockTextSize = getTextSize(blockSize);
         }
         auto& block = blockGrid[gridPos.As1D(gridSize)];
@@ -237,7 +249,8 @@ void GameScreen::CameFrom(Screen* screen)
   }
 }
 
-std::unordered_set<Coord, CoordHash> generateUniqueCoordinates(int max, int count, const std::unordered_set<Coord, CoordHash>& safeBlocks)
+// TODO: snakeSafeMode should ensure a path around all bombs is navigable
+std::unordered_set<Coord, CoordHash> generateUniqueCoordinates(int max, int count, const std::unordered_set<Coord, CoordHash>& safeBlocks, [[maybe_unused]] bool snakeSafeMode)
 {
   std::unordered_set<Coord, CoordHash> unique_coords;
   unique_coords.reserve(static_cast<std::size_t>(count));
@@ -256,34 +269,64 @@ std::unordered_set<Coord, CoordHash> generateUniqueCoordinates(int max, int coun
   return unique_coords;
 }
 
-void GameScreen::GenerateGame(Coord safeBlock)
+void GameScreen::GenerateGame(std::unordered_set<Coord, CoordHash>& safeBlocks)
 {
   snakeBlocks.clear();
 
-  const auto gridSizeSqr = static_cast<std::size_t>(gridSize) * static_cast<std::size_t>(gridSize);
-
-  // just used for while we are generating
-  // Generate (unique) Bomb Locations
-  std::unordered_set<Coord, CoordHash> safeBlocks;
-  safeBlocks.insert(safeBlock);
-  auto bombBlocks = generateUniqueCoordinates(gridSize - 1, numBombs, safeBlocks);
-
-  // Place bombs on grid, and set "radar" values
-  for (auto bomb : bombBlocks) {
-    auto bombCoord = bomb.As1D(gridSize);
-    blockGrid[bombCoord].state = static_cast<Block::State>(blockGrid[bombCoord].state | Block::State::Bomb);
-    // Increment grid for surrounding non-bomb cells
-    for (int x = -1; x <= 1; ++x) {
-      for (int y = -1; y <= 1; ++y) {
-        const Coord coord{bomb.x + x, bomb.y + y};
-        if (coord.x >= 0 && coord.y >= 0 && coord.x < gridSize && coord.y < gridSize) {
-          const auto idx = coord.As1D(gridSize);
-          if (auto& cell = blockGrid[idx]; !static_cast<bool>(cell.state & Block::State::Bomb)) {
-            ++cell.value;
+  auto markBombsAndRadar = [this](const std::unordered_set<Coord, CoordHash>& bombs) {
+    // Place bombs on grid, and set "radar" values
+    for (auto bomb : bombs) {
+      auto bombCoord = bomb.As1D(gridSize);
+      blockGrid[bombCoord].state = static_cast<Block::State>(blockGrid[bombCoord].state | Block::State::Bomb);
+      // Increment grid for surrounding non-bomb cells
+      for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+          const Coord coord{bomb.x + x, bomb.y + y};
+          if (coord.x >= 0 && coord.y >= 0 && coord.x < gridSize && coord.y < gridSize) {
+            const auto idx = coord.As1D(gridSize);
+            if (auto& cell = blockGrid[idx]; !static_cast<bool>(cell.state & Block::State::Bomb)) {
+              ++cell.value;
+            }
           }
         }
       }
     }
+  };
+
+  // Generate (unique) Bomb Locations
+  auto bombBlocks = generateUniqueCoordinates(gridSize - 1, numBombs, safeBlocks, snakeMode);
+  markBombsAndRadar(bombBlocks);
+
+  // if snake mode is enabled, we want to make sure all blocks that are surrounded with bombs or walls, are bombs too
+  // TODO:this currently just makes it harder :(
+  if (false) {
+    // if (snakeMode) {
+    std::array<Coord, 4> dirs = {{{-1, 0},
+        {1, 0},
+        {0, -1},
+        {0, 1}}};
+    auto gridSizeSqr = static_cast<std::size_t>(gridSize) * static_cast<std::size_t>(gridSize);
+    std::unordered_set<Coord, CoordHash> newBombs;
+    for (std::size_t blockIdx = 0; blockIdx < gridSizeSqr; ++blockIdx) {
+      const auto& block = blockGrid[blockIdx];
+      auto pos = Coord::AsCoord(blockIdx, gridSize);
+      if (!static_cast<bool>(block.state & Block::State::Bomb)) {
+        std::uint8_t adjCount = 0;
+        for (auto dir : dirs) {
+          const Coord coord{pos.x + dir.x, pos.y + dir.y};
+          if (coord != pos && coord.x >= 0 && coord.y >= 0 && coord.x < gridSize && coord.y < gridSize) {
+            adjCount += blockGrid[coord.As1D(gridSize)].state & Block::State::Bomb;
+            if (adjCount > 2) {
+              newBombs.insert(pos);
+              break;
+            }
+          } else {
+            adjCount++;
+          }
+        }
+      }
+    }
+    markBombsAndRadar(newBombs);
   }
   isGenerated = true;
 }

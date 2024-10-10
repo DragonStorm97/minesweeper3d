@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <list>
 #include <screen.hpp>
+#include <unordered_set>
 
 struct Coord {
   int x, y;
@@ -68,7 +69,7 @@ class GameScreen : public Screen {
   void CameFrom(Screen* screen) override;
 
   private:
-  void GenerateGame(Coord safeBlock);
+  void GenerateGame(std::unordered_set<Coord, CoordHash>& safeBlocks);
   void DrawBlock(Coord pos, Block block, float blockSize) const;
   void RevealFrom(Coord pos);
 
