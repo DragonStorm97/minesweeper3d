@@ -37,3 +37,19 @@ Snake mode is very difficult, and sometimes impossible if the bomb placement
 doesn't go your way.
 
 ![Snake Mode](assets/snek_mode.jpg)
+
+## How To Minesweeper
+
+**Cell Number**:
+
+- Each cell contains the number of adjacent cells that contain a bomb.
+- An adjacent cell is any of the 8 cells surrounding a cell.
+- There are exactly the number of bombs in those 8 cells as the number represents.
+
+**Steps**:
+
+- Start by uncovering the first cell (will never be a bomb).
+- Use the knowledge provided by the cell's number to determine/guess which adjacent
+  cell might or might not be a bomb.
+- Optionally, flag bombs (or cells you think are bombs that you want to determine later).
+- Uncover a bomb to lose, or uncover all non-bomb cells to win!
